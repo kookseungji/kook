@@ -1,0 +1,65 @@
+import re
+import scrapy
+from naverblog.items import NewscrawlItem
+from datetime import timedelta, date
+from urllib import parse
+import time
+import random
+from time import sleep
+
+start_date = date(2005, 1, 1)
+end_date = date(2017, 12, 31)
+cnt_per_page = 10
+keyword = "금리"
+
+url_format = ("https://search.naver.com/search.naver?where=news"+
+    "&query={1}"+"&sm=tab_pge&sort=0&photo=0&field=0&reporter_article=&pd=3"+
+    "&ds={0}&de={0}"+"&docid=&nso=so:r,p:from{0}to{0},a:all&mynews=1"+
+    "&cluster_rank=15&start={2}")
+
+class YonhapSpider(scrapy.Spider):
+    def daterange(start_date, end_date):
+        for n in range(int((end_date - start_date).days)):
+            yield start_date + timedelta(n)
+
+    name = 'yonhap2'
+    allowed_domains = ['naver.com','yna.co.kr'] 
+    start_urls = []
+    
+    for single_date in daterange(start_date, end_date):
+        start_urls.append(url_format.format(single_date.strftime("%Y%m%d"), keyword, 1))
+
+    def parse(self, response):
+        for href in response.xpath("//li[contains(@id,'sp_nws')]/dl/dt/a/@href").extract():
+            yield response.follow(href, self.parse_details)
+        
+        total_cnt = int(re.sub('[()전체건,]','',response.css('div.title_desc span::text').get().split('/')[1]))
+        query_str = parse.parse_qs(parse.urlsplit(response.url).query)
+        currpage = int(query_str['start'][0])
+
+        startdate = query_str['ds'][0]
+        print("========================== [" + startdate + '] ' + str(currpage) + '/' + str(total_cnt) + 
+        "=======================") 
+        if currpage  < total_cnt :
+            yield response.follow(url_format.format(startdate, keyword, currpage+10) , self.parse)
+
+    def parse_details(self, response):    
+        item = NewscrawlItem()
+        
+        try:  
+            item['url'] = response.url
+            item['date'] = response.css('div.dates').xpath('//p[contains(text(),"등록")][1]/text()').get().split(' ')[1]
+            # item['date'] = response.css('div.dates p:nth-child(1)::text').extract().split(' ')[1]
+            # contains[string1, string2] : string1에 string2 가 포함되어 있는지 여부
+            item['title'] = response.css('div.news_titles h2::text').get()
+            item['content'] = response.css('div.news_body::text').getall()   
+            yield item
+
+        except: # 네이버 뉴스
+            item['url'] = response.url
+            item['date'] = response.css('span.t11::text').get().split(' ')[0]
+            # item['date'] = response.css('div.dates p:nth-child(1)::text').extract().split(' ')[1]
+            # contains[string1, string2] : string1에 string2 가 포함되어 있는지 여부
+            item['title'] = response.css('#articleTitle::text').get()
+            item['content'] = response.css('#articleBodyContents::text').getall()
+news.naver.com/main/list.nhn?mode=LPOD&mid=sec&sid1=001&sid2=140&oid=001&isYeonhapFlash=Y
