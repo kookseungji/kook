@@ -1,0 +1,35 @@
+### commoncommon:  # 모델명  modelName: 'bilstm_main_v1_2'  # 학습 시작/종료 날짜  train_start_date: '2019-01-01'
+## 1주차
+#   train_end_date: '2020-08-27'
+#   test_start_date: '2020-08-31'
+#   test_end_date: '2020-09-04'  
+## 2주차
+#   train_end_date: '2020-09-03'
+#   test_start_date: '2020-09-07'
+#   test_end_date: '2020-09-11' 
+## 3주차
+#   train_end_date: '2020-09-10'
+#   test_start_date: '2020-09-14'
+#   test_end_date: '2020-09-18'  
+## 4주차
+#   train_end_date: '2020-09-17'
+#   test_start_date: '2020-09-21'
+#   test_end_date: '2020-09-25'
+  ## 서울 강수량#   train_end_date: '2020-07-16'#   test_start_date: '2020-07-20'#   test_end_date: '2020-07-24'
+## 횡성 강수량
+#   train_end_date: '2020-07-30'
+#   test_start_date: '2020-08-03'
+#   test_end_date: '2020-08-07'
+
+## 광복절
+  train_end_date: '2020-08-13'
+  test_start_date: '2020-08-17'
+  test_end_date: '2020-08-21'
+
+
+
+
+
+### data importdata_import:  # import train data#   train_readS3BucketName: 'ldcc-cafeteria-01-bucket-bellship'#   train_readS3Key: 'related_ts/lottefood_input2.csv'#   # import related data#   rel_readS3BucketName: 'ldcc-cafeteria-01-bucket-bellship'#   rel_readS3Key: 'related_ts/lottefood_input2.csv'# ### data preparation (n_steps_in = n_seq * n_steps)data_prep:  # input의 스탭 수  n_steps_in: 8  # output의 스탭 수  n_steps_out: 8  # 사용할 변수들  features:    - timestamp#    - item_id#    - same_menu    - rainfall    - temperature    - abnormal    - dayofweek_median    - day_sin
+    - weekday    - holiday    - before_holiday
+    - after_holiday    - gate  # 미래 데이터를 사용할 변수  future_var_list:#    - holiday    # - rain_prob# train modeltrain_model:  ## 셀 수  cell: 30  ## 에포크  epochs: 50  ## 배치 사이즈  batch_size: 40  ## 학습 과정 로그  verbose: 1# save resultsave_res:  ## s3에 데이터 올릴 지 여부  upload_to_s3_bool: False  ## 로컬 저장 경로  save_dir: 'data/result/'###
